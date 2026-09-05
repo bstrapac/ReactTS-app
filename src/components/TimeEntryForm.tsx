@@ -1,5 +1,6 @@
 import { SubmitEvent } from 'react';
-import { TimeEntryForm as TimeEntryFormValues } from '../types';
+import { TimeEntryFormValues } from '../types';
+import { people } from '../utils';
 /*
 https://developer.productive.io/reference/resources/time-entries
 */
@@ -10,9 +11,10 @@ type TimeEntryFormProps = {
 	onChange: (field: keyof TimeEntryFormValues, value: string) => void;
 	onSubmit: (event: SubmitEvent) => void;
 	onCancel: () => void;
+	error: string;
 };
 
-export function TimeEntryForm({ values, editing, onChange, onSubmit, onCancel }: TimeEntryFormProps) {
+export function TimeEntryForm({ values, editing, onChange, onSubmit, onCancel, error }: TimeEntryFormProps) {
 	return (
 		<section className='entry-form-section'>
 			<div className='section-heading'>
@@ -34,44 +36,47 @@ export function TimeEntryForm({ values, editing, onChange, onSubmit, onCancel }:
 					/>
 				</label>
 				<label>
-					Project or activity
-					<input
-						value={values.project}
-						onChange={({ target: { value } }) => onChange('project', value)}
-						placeholder='e.g. Client work'
-						required
-					/>
-				</label>
-
-				<label>
 					What did you work on?
 					<textarea
 						value={values.note}
 						onChange={({ target: { value } }) => onChange('note', value)}
-						placeholder='Add a note (optional)'
+						placeholder='Describe the work'
 						rows={3}
+						required
 					/>
 				</label>
-				<div className='time-fields'>
-					<label>
-						Start time
-						<input
-							type='time'
-							value={values.start}
-							onChange={({ target: { value } }) => onChange('start', value)}
-							required
-						/>
-					</label>
-					<label>
-						End time
-						<input
-							type='time'
-							value={values.end}
-							onChange={({ target: { value } }) => onChange('end', value)}
-							required
-						/>
-					</label>
-				</div>
+				<label>
+					Person assigned
+					<select
+						value={values.personId}
+						onChange={({ target: { value } }) => onChange('personId', value)}
+						required
+					>
+						<option value='' disabled>Select a person</option>
+						{people.map((person) => (
+							<option key={person.id} value={person.id}>{person.name}</option>
+						))}
+					</select>
+				</label>
+				<label>
+					Started at
+					<input
+						type='time'
+						value={values.startedAt}
+						onChange={({ target: { value } }) => onChange('startedAt', value)}
+						required
+					/>
+				</label>
+				<label>
+					Ends at
+					<input
+						type='time'
+						value={values.endsAt}
+						onChange={({ target: { value } }) => onChange('endsAt', value)}
+						required
+					/>
+				</label>
+				{error && <p className='form-error' role='alert'>{error}</p>}
 				<button className='primary-button' type='submit'>
 					{editing ? 'Save changes' : 'Add time entry'} <span aria-hidden='true'>→</span>
 				</button>

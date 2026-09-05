@@ -1,49 +1,108 @@
-import { TimeEntry, TimeEntryForm } from './types';
+import { defaultTimeEntryValues, TimeEntry, TimeEntryApiResource, TimeEntryFormValues } from './types';
 
 export const today = new Date().toISOString().slice(0, 10);
 
-export const emptyForm: TimeEntryForm = {
+export const emptyForm: TimeEntryFormValues = {
 	date: '',
-	project: '',
 	note: '',
-	start: '09:00',
-	end: '10:00',
+	startedAt: '',
+	endsAt: '',
+	personId: '',
 };
+
+export const people = [
+	{ id: '1', name: 'Jordan Davis' },
+	{ id: '2', name: 'Alex Morgan' },
+	{ id: '3', name: 'Sam Taylor' },
+];
+
+export const personName = (personId: string | null | undefined) =>
+	people.find((person) => person.id === personId)?.name ?? 'No person assigned';
+
+export const fromApiTimeEntry = (entry: TimeEntryApiResource): TimeEntry => ({
+	...defaultTimeEntryValues,
+	id: entry.id,
+	date: entry.attributes.date,
+	note: entry.attributes.note,
+	time: entry.attributes.time,
+	startedAt: entry.attributes.started_at,
+	relationships: entry.relationships,
+});
 
 export const initialEntries: TimeEntry[] = [
 	{
-		id: 1,
+		...defaultTimeEntryValues,
+		id: '1',
 		date: today,
-		project: 'Product design',
 		note: 'Refined the onboarding flow',
-		start: '09:00',
-		end: '11:30',
+		startedAt: `${today}T09:00:00.000+00:00`,
+		time: 150,
 	},
 	{
-		id: 2,
+		...defaultTimeEntryValues,
+		id: '2',
 		date: today,
-		project: 'Engineering',
 		note: 'API integration and testing',
-		start: '13:00',
-		end: '16:15',
+		startedAt: `${today}T13:00:00.000+00:00`,
+		time: 195,
 	},
 	{
-		id: 3,
+		...defaultTimeEntryValues,
+		id: '3',
 		date: today,
-		project: 'Team sync',
 		note: 'Weekly planning and check-in',
-		start: '16:30',
-		end: '17:00',
+		startedAt: `${today}T16:30:00.000+00:00`,
+		time: 30,
 	},
 ];
 
-export const duration = (start: string, end: string) => {
-	const minutes = (new Date(`1970-01-01T${end}`).getTime() - new Date(`1970-01-01T${start}`).getTime()) / 60000;
-	return minutes > 0 ? `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m` : '0h 00m';
+export const duration = (minutes: number | null) =>
+	minutes && minutes > 0 ? `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m` : '0h 00m';
+
+export const minutesBetween = (minutes: number | null) => Math.max(0, minutes ?? 0);
+
+export const minutesBetweenTimes = (startedAt: string, endsAt: string) => {
+	const toMinutes = (time: string) => {
+		const match = time.match(/^(\d{2}):(\d{2})$/);
+		return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+	};
+
+	const start = toMinutes(startedAt);
+	const end = toMinutes(endsAt);
+	return start == null || end == null ? null : end - start;
 };
 
-export const minutesBetween = (start: string, end: string) =>
-	Math.max(0, (new Date(`1970-01-01T${end}`).getTime() - new Date(`1970-01-01T${start}`).getTime()) / 60000);
+export const timeOfDay = (dateTime: string | null) => {
+	const match = dateTime?.match(/T(\d{2}:\d{2})/);
+	return match?.[1] ?? '';
+};
+
+// Time entries represent the wall-clock time selected by the user, not a UTC instant.
+export const dateTimeAt = (date: string, time: string) => `${date}T${time}:00`;
+
+export const endTime = (startedAt: string | null, minutes: number | null) => {
+	if (!startedAt || minutes == null) return null;
+
+	const match = startedAt.match(/T(\d{2}):(\d{2})/);
+	if (!match) return null;
+
+	const totalMinutes = Number(match[1]) * 60 + Number(match[2]) + minutes;
+	const endHours = Math.floor(totalMinutes / 60) % 24;
+	const endMinutes = totalMinutes % 60;
+	return `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+};
+
+export const formatTime = (dateTime: string | null) => {
+	if (!dateTime) return 'Not started';
+	if (/^\d{2}:\d{2}$/.test(dateTime)) return dateTime;
+	const time = timeOfDay(dateTime);
+	if (time) return time;
+
+	const date = new Date(dateTime);
+	return Number.isNaN(date.getTime())
+		? 'Not started'
+		: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+};
 
 export const formatDate = (date: string) =>
 	new Intl.DateTimeFormat('en-US', {

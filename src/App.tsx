@@ -1,11 +1,19 @@
-import { useState } from 'react';
 import './App.css';
 import { Dashboard } from './components/Dashboard';
 import { Login } from './components/Login';
+import { SessionProvider, useSession } from './context/SessionContext';
+
+function AppContent() {
+	const { email, signIn } = useSession();
+	return email ? <Dashboard /> : <Login onLogin={signIn} />;
+}
 
 function App() {
-	const [loggedIn, setLoggedIn] = useState(false);
-	return loggedIn ? <Dashboard onSignOut={() => setLoggedIn(false)} /> : <Login onLogin={() => setLoggedIn(true)} />;
+	return (
+		<SessionProvider>
+			<AppContent />
+		</SessionProvider>
+	);
 }
 
 export default App;

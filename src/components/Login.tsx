@@ -3,12 +3,12 @@ import { SubmitEvent, useState } from 'react';
  * https://developer.productive.io/reference/resources/organization-memberships
 
 */
-export function Login({ onLogin }: { onLogin: () => void }) {
+export function Login({ onLogin }: { onLogin: (email: string) => void }) {
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const submit = (event: SubmitEvent) => {
 		event.preventDefault();
-		if (email && password) onLogin();
+		if (email && password) onLogin(email);
 	};
 
 	return (

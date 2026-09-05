@@ -1,10 +1,10 @@
 import { TimeEntry } from '../types';
-import { duration } from '../utils';
+import { duration, endTime, formatTime, personName } from '../utils';
 
 type TimeEntryListProps = {
 	entries: TimeEntry[];
 	onEdit: (entry: TimeEntry) => void;
-	onDelete: (id: number) => void;
+	onDelete: (id: string) => void;
 };
 
 export function TimeEntryList({ entries, onEdit, onDelete }: TimeEntryListProps) {
@@ -26,19 +26,19 @@ export function TimeEntryList({ entries, onEdit, onDelete }: TimeEntryListProps)
 						<article className='entry-row' key={entry.id}>
 							<div className='entry-time'>
 								<span>{entry.date}</span>
-								<strong>{entry.start}</strong>
-								<span>to {entry.end}</span>
+								<strong>{formatTime(entry.startedAt)}</strong>
+								<span>to {formatTime(endTime(entry.startedAt, entry.time))}</span>
 							</div>
 							<div className='entry-detail'>
-								<strong>{entry.project}</strong>
-								<span>{entry.note || 'No note added'}</span>
+								<strong>{entry.note || 'Untitled entry'}</strong>
+								<span>{personName(entry.relationships.person.data?.id)}</span>
 							</div>
-							<span className='entry-duration'>{duration(entry.start, entry.end)}</span>
+							<span className='entry-duration'>{duration(entry.time)}</span>
 							<div className='entry-actions'>
-								<button aria-label={`Edit ${entry.project}`} onClick={() => onEdit(entry)}>
+								<button aria-label={`Edit ${entry.note || 'entry'}`} onClick={() => onEdit(entry)}>
 									Edit
 								</button>
-								<button aria-label={`Delete ${entry.project}`} onClick={() => onDelete(entry.id)}>
+								<button aria-label={`Delete ${entry.note || 'entry'}`} onClick={() => onDelete(entry.id)}>
 									Delete
 								</button>
 							</div>
