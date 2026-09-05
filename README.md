@@ -1,5 +1,15 @@
 # Getting Started with Create React App
 
+## API client
+
+The shared client is available at `src/api/client.ts`. Set `REACT_APP_API_URL` to configure the API base URL:
+
+```env
+REACT_APP_API_URL=https://api.example.com
+```
+
+Use `apiClient.get`, `apiClient.post`, `apiClient.put`, and `apiClient.delete` from a feature service when the endpoint contracts are available. Pass a `getToken` function to `new ApiClient` when requests need the current bearer token. The dashboard remains in-memory until the API request and response shapes are defined.
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
