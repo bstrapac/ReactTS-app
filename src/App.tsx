@@ -1,4 +1,4 @@
-import './styles/base.css';
+import './styles/App.css';
 import { Dashboard } from './components/Dashboard';
 import { Login } from './components/Login';
 import { SessionProvider, useSession } from './context/SessionContext';
