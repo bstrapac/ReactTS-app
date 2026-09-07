@@ -1,14 +1,31 @@
 import { SubmitEvent, useState } from 'react';
-/**
- * https://developer.productive.io/reference/resources/organization-memberships
+import { ApiError } from '../api/client';
+import '../styles/login.css';
 
-*/
-export function Login({ onLogin }: { onLogin: (email: string) => void }) {
-	const [email, setEmail] = useState('');
-	const [password, setPassword] = useState('');
-	const submit = (event: SubmitEvent) => {
+type LoginProps = {
+	onLogin: (organizationId: string, token: string) => Promise<void>;
+};
+
+export function Login({ onLogin }: LoginProps) {
+	const [organizationId, setOrganizationId] = useState(process.env.REACT_APP_ORGANIZATION_ID ?? '');
+	const [token, setToken] = useState(process.env.REACT_APP_API_TOKEN ?? '');
+	const [error, setError] = useState('');
+	const [loading, setLoading] = useState(false);
+	const submit = async (event: SubmitEvent) => {
 		event.preventDefault();
-		if (email && password) onLogin(email);
+		if (!organizationId || !token) return;
+		setError('');
+		setLoading(true);
+		try {
+			await onLogin(organizationId, token);
+			console.log('[Login] authentication succeeded', { organizationId });
+		} catch (cause) {
+			const apiError = cause instanceof ApiError ? `API ${cause.status}: ${formatApiError(cause.body)}` : 'The browser could not reach the API.';
+			console.error('[Login] authentication failed', { organizationId, error: cause });
+			setError(apiError);
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (
@@ -26,35 +43,30 @@ export function Login({ onLogin }: { onLogin: (email: string) => void }) {
 				<p className='login-copy'>A calm place to keep your workday clear, focused, and accounted for.</p>
 				<form onSubmit={submit} className='login-form'>
 					<label>
-						Email address
+						Organization ID
 						<input
-							type='email'
-							value={email}
-							onChange={({ target: { value } }) => setEmail(value)}
-							placeholder='you@company.com'
+							type='number'
+							value={organizationId}
+							onChange={({ target: { value } }) => setOrganizationId(value)}
+							placeholder='Organization ID'
 							required
 						/>
 					</label>
 					<label>
-						Password
+						API token
 						<input
 							type='password'
-							value={password}
-							onChange={({ target: { value } }) => setPassword(value)}
-							placeholder='Enter your password'
+							value={token}
+							onChange={({ target: { value } }) => setToken(value)}
+							placeholder='Enter your token here'
 							required
 						/>
 					</label>
+					{error && <p className='form-error' role='alert'>{error}</p>}
 					<button className='primary-button' type='submit'>
-						Sign in <span aria-hidden='true'>→</span>
+						{loading ? 'Checking...' : 'Sign in'} <span aria-hidden='true'>→</span>
 					</button>
 				</form>
-				<p className='login-foot'>
-					New here?{' '}
-					<button className='text-button' type='button'>
-						Create an account
-					</button>
-				</p>
 			</section>
 			<aside className='login-aside'>
 				<div className='aside-shape' />
@@ -63,4 +75,10 @@ export function Login({ onLogin }: { onLogin: (email: string) => void }) {
 			</aside>
 		</main>
 	);
+}
+
+function formatApiError(body: unknown) {
+	if (typeof body === 'string') return body;
+	if (body && typeof body === 'object' && 'message' in body && typeof body.message === 'string') return body.message;
+	return 'The API rejected the request.';
 }

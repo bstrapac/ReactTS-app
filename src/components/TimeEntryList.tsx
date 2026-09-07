@@ -1,13 +1,14 @@
-import { TimeEntry } from '../types';
+import { SelectOption, TimeEntry } from '../types';
 import { duration, endTime, formatTime, personName } from '../utils';
 
 type TimeEntryListProps = {
 	entries: TimeEntry[];
+	people: SelectOption[];
 	onEdit: (entry: TimeEntry) => void;
 	onDelete: (id: string) => void;
 };
 
-export function TimeEntryList({ entries, onEdit, onDelete }: TimeEntryListProps) {
+export function TimeEntryList({ entries, people, onEdit, onDelete }: TimeEntryListProps) {
 	return (
 		<section className='entries-section'>
 			<div className='section-heading'>
@@ -31,14 +32,14 @@ export function TimeEntryList({ entries, onEdit, onDelete }: TimeEntryListProps)
 							</div>
 							<div className='entry-detail'>
 								<strong>{entry.note || 'Untitled entry'}</strong>
-								<span>{personName(entry.relationships.person.data?.id)}</span>
+								<span>{personName(people, entry.relationships.person.data?.id)}</span>
 							</div>
 							<span className='entry-duration'>{duration(entry.time)}</span>
 							<div className='entry-actions'>
-								<button aria-label={`Edit ${entry.note || 'entry'}`} onClick={() => onEdit(entry)}>
+								<button type='button' aria-label={`Edit ${entry.note || 'entry'}`} onClick={() => onEdit(entry)}>
 									Edit
 								</button>
-								<button aria-label={`Delete ${entry.note || 'entry'}`} onClick={() => onDelete(entry.id)}>
+								<button type='button' aria-label={`Delete ${entry.note || 'entry'}`} onClick={() => onDelete(entry.id)}>
 									Delete
 								</button>
 							</div>

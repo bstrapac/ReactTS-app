@@ -1,6 +1,5 @@
-const PRODUCTIVE_API_URL = 'https://api.productive.io/api/v2';
-const PRODUCTIVE_API_TOKEN = '26378bd1-792d-4e8d-94ae-de9185b0c4b4';
-const PRODUCTIVE_ORGANIZATION_ID = '61506';
+import { Organization, OrganizationMembership, Person, User } from '../types';
+const PRODUCTIVE_API_URL = process.env.NODE_ENV === 'development' ? '/api/v2' : 'https://api.productive.io/api/v2';
 
 export type ApiClientOptions = {
 	baseUrl?: string;
@@ -20,6 +19,10 @@ export type TimeEntryFilters = {
 
 type CollectionResponse<T> = {
 	data: T[];
+};
+
+type DocumentResponse<T> = {
+	data: T;
 };
 
 export class ApiError extends Error {
@@ -42,19 +45,19 @@ export class ApiClient {
 
 	constructor(options: ApiClientOptions = {}) {
 		this.baseUrl = options.baseUrl ?? process.env.REACT_APP_API_URL ?? PRODUCTIVE_API_URL;
-		this.getToken = options.getToken ?? (() => options.token ?? process.env.REACT_APP_API_TOKEN ?? PRODUCTIVE_API_TOKEN);
-		const organizationId = options.organizationId ?? process.env.REACT_APP_ORGANIZATION_ID ?? PRODUCTIVE_ORGANIZATION_ID;
+		this.getToken = options.getToken ?? (() => options.token ?? process.env.REACT_APP_API_TOKEN ?? null);
+		const organizationId = options.organizationId ?? process.env.REACT_APP_ORGANIZATION_ID;
 		this.organizationId = organizationId == null ? undefined : String(organizationId);
-		this.fetcher = options.fetcher ?? fetch;
+		this.fetcher = options.fetcher ?? fetch.bind(globalThis);
 	}
 
 	async request<T>(path: string, options: RequestInit = {}): Promise<T> {
 		const token = this.getToken?.();
 		const headers = new Headers(options.headers);
+		const url = this.url(path);
 
-		if (options.body && !headers.has('Content-Type')) {
-			headers.set('Content-Type', 'application/json');
-		}
+		headers.set('Accept', 'application/vnd.api+json');
+		if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/vnd.api+json');
 		if (token) {
 			headers.set('X-Auth-Token', token);
 		}
@@ -62,7 +65,7 @@ export class ApiClient {
 			headers.set('X-Organization-Id', this.organizationId);
 		}
 
-		const response = await this.fetcher(this.url(path), {
+		const response = await this.fetcher(url, {
 			...options,
 			headers,
 		});
@@ -81,9 +84,9 @@ export class ApiClient {
 
 	listTimeEntries<T>(filters: TimeEntryFilters = {}, options?: RequestInit) {
 		const params = new URLSearchParams();
-		if (filters.personId != null) params.set('person_id', String(filters.personId));
-		if (filters.after) params.set('after', filters.after);
-		if (filters.before) params.set('before', filters.before);
+		if (filters.personId != null) params.set('filter[person_id]', String(filters.personId));
+		if (filters.after) params.set('filter[after]', filters.after);
+		if (filters.before) params.set('filter[before]', filters.before);
 		if (filters.pageNumber != null) params.set('page[number]', String(filters.pageNumber));
 		if (filters.pageSize != null) params.set('page[size]', String(filters.pageSize));
 		const query = params.toString();
@@ -91,8 +94,9 @@ export class ApiClient {
 		return this.getAll<T>(`/time_entries${query ? `?${query}` : ''}`, options);
 	}
 
+
 	async listAllTimeEntries<T>(filters: Omit<TimeEntryFilters, 'pageNumber' | 'pageSize'> = {}, options?: RequestInit) {
-		const pageSize = 100;
+		const pageSize = 200;
 		const entries: T[] = [];
 
 		for (let pageNumber = 1; ; pageNumber += 1) {
@@ -102,12 +106,55 @@ export class ApiClient {
 		}
 	}
 
+	async listAll<T>(resource: string, options?: RequestInit) {
+		const pageSize = 200;
+		const records: T[] = [];
+		for (let pageNumber = 1; ; pageNumber += 1) {
+			const response = await this.getAll<CollectionResponse<T>>(`${resource}?page[number]=${pageNumber}&page[size]=${pageSize}`, options);
+			records.push(...response.data);
+			if (response.data.length < pageSize) return records;
+		}
+	}
+
 	get<T>(path: string, options?: RequestInit) {
 		return this.request<T>(path, { ...options, method: 'GET' });
 	}
 
-	getTimeEntry<T>(id: string | number, options?: RequestInit) {
-		return this.get<T>(`/time_entries/${id}`, options);
+	async getOrganization(id: string | number, options?: RequestInit) {
+		const response = await this.get<DocumentResponse<Organization>>(`/organizations/${id}`, options);
+		return response.data;
+	}
+
+	async getOrganizationMemberships(organizationId: string | number, options?: RequestInit) {
+		const params = new URLSearchParams({
+			'filter[organization_id]': String(organizationId),
+			'page[size]': '10',
+		});
+		const response = await this.get<CollectionResponse<OrganizationMembership>>(`/organization_memberships?${params.toString()}`, options);
+		return response.data;
+	}
+
+	async getOrganizationMembership(id: string | number, options?: RequestInit) {
+		const response = await this.get<DocumentResponse<OrganizationMembership>>(`/organization_memberships/${id}`, options);
+		return response.data;
+	}
+
+	async getUser(id: string | number, options?: RequestInit) {
+		const response = await this.get<DocumentResponse<User>>(`/users/${id}`, options);
+		return response.data;
+	}
+
+	async getPerson(id: string | number, options?: RequestInit) {
+		const response = await this.get<DocumentResponse<Person>>(`/people/${id}`, options);
+		return response.data;
+	}
+
+	async getUsers(options?: RequestInit) {
+		return this.listAll<User>('/users', options);
+	}
+
+	async getPeople(options?: RequestInit) {
+		return this.listAll<Person>('/people', options);
 	}
 
 	post<T>(path: string, body: unknown, options?: RequestInit) {

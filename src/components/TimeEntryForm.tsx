@@ -1,6 +1,5 @@
 import { SubmitEvent } from 'react';
-import { TimeEntryFormValues } from '../types';
-import { people } from '../utils';
+import { SelectOption, TimeEntryFormValues } from '../types';
 /*
 https://developer.productive.io/reference/resources/time-entries
 */
@@ -12,15 +11,17 @@ type TimeEntryFormProps = {
 	onSubmit: (event: SubmitEvent) => void;
 	onCancel: () => void;
 	error: string;
+	people: SelectOption[];
+	services: SelectOption[];
 };
 
-export function TimeEntryForm({ values, editing, onChange, onSubmit, onCancel, error }: TimeEntryFormProps) {
+export function TimeEntryForm({ values, editing, onChange, onSubmit, onCancel, error, people, services }: TimeEntryFormProps) {
 	return (
 		<section className='entry-form-section'>
 			<div className='section-heading'>
 				<h2>{editing ? 'Edit entry' : 'Add entry'}</h2>
 				{editing && (
-					<button className='cancel-button' onClick={onCancel}>
+					<button type='button' className='cancel-button' onClick={onCancel}>
 						Cancel
 					</button>
 				)}
@@ -44,6 +45,13 @@ export function TimeEntryForm({ values, editing, onChange, onSubmit, onCancel, e
 						rows={3}
 						required
 					/>
+				</label>
+				<label>
+					Service
+					<select value={values.serviceId} onChange={({ target: { value } }) => onChange('serviceId', value)} required>
+						<option value='' disabled>Select a service</option>
+						{services.map((service) => <option key={service.id} value={service.id}>{service.name}</option>)}
+					</select>
 				</label>
 				<label>
 					Person assigned

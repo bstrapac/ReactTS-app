@@ -1,0 +1,102 @@
+.login-page {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--cream);
+}
+
+.login-panel {
+    max-width: 530px;
+    width: 100%;
+    margin: auto;
+    padding: 48px;
+}
+
+.login-copy {
+    max-width: 340px;
+    color: var(--muted);
+    font: 16px/1.6 'Trebuchet MS', sans-serif;
+    margin: 28px 0 42px;
+}
+
+.login-form {
+    display: grid;
+    gap: 20px;
+}
+
+.primary-button {
+    width: 100%;
+}
+
+.login-foot {
+    color: var(--muted);
+    font: 12px 'Trebuchet MS', sans-serif;
+    margin-top: 24px;
+}
+
+.login-aside {
+    background: var(--mint);
+    min-height: 100vh;
+    padding: 15%;
+    display: flex;
+    justify-content: flex-end;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-aside p {
+    font-size: clamp(25px, 3vw, 43px);
+    line-height: 1.08;
+    max-width: 500px;
+    margin: 0 0 25px;
+    position: relative;
+}
+
+.login-aside span {
+    font: 12px 'Trebuchet MS', sans-serif;
+    color: var(--green);
+    position: relative;
+}
+
+.aside-shape {
+    width: 270px;
+    height: 270px;
+    border-radius: 50%;
+    background: var(--orange);
+    position: absolute;
+    top: 13%;
+    right: 16%;
+    opacity: .85;
+}
+
+@media (max-width: 760px) {
+    .login-page {
+        grid-template-columns: 1fr;
+    }
+
+    .login-panel {
+        padding: 36px 24px 50px;
+    }
+
+    .login-panel .eyebrow {
+        margin-top: 58px;
+    }
+
+    .login-aside {
+        min-height: 260px;
+        padding: 35px 24px;
+    }
+
+    .aside-shape {
+        width: 130px;
+        height: 130px;
+        top: 12%;
+        right: 8%;
+    }
+
+    .login-aside p {
+        font-size: 27px;
+        max-width: 300px;
+    }
+}
